@@ -26,29 +26,35 @@ def valid_ecl(eye_colour):
     return eye_colour in valid
 
 def valid_pid(passport_id):
-    # does not check it is a num
-    return len(passport_id) == 9
+    return len(passport_id) == 9 and all([c.isnumeric() for c in passport_id])
 
-required = sorted(['byr', 'iyr', 'eyr', 'hgt', 'hcl', 'ecl', 'pid'])
-with open("input.txt", "r") as f:
-    lines = f.readlines()
-    total_lines = len(lines)
+if __name__ == '__main__':
+    # extract input from file
+    with open('input.txt', 'r') as f:
+        lines = [x.rstrip() for x in f.readlines()] + ['']
+    
+    # required fields
+    required = sorted(['byr', 'iyr', 'eyr', 'hgt', 'hcl', 'ecl', 'pid'])
     count = 0
+    current_passport = []
 
-    curr_has = []
-    for row, line in enumerate(lines):
-        if line != '\n':
-            for pair in line.split(' '):
-                key = pair.split(':')[0]
-                val = pair.split(':')[1].rstrip()
-                if key in required:
-                    if (key == 'byr' and valid_byr(val)) or (key == 'iyr' and valid_iyr(val)) or (key == 'eyr' and valid_eyr(val)) or (key == 'hgt' and valid_hgt(val)) or (key == 'hcl' and valid_hcl(val)) or (key == 'ecl' and valid_ecl(val)) or (key == 'pid' and valid_pid(val)):
-                        curr_has.append(key)
-        if line == '\n' or row == total_lines - 1:
-            # check
-            if sorted(curr_has) == required:
+    for line in lines:
+        # empty line
+        if not line:
+            # check passport contains all the required keys that have valid values
+            if sorted(current_passport) == required:
                 count += 1
-            # reset
-            curr_has = []
+            # reset current_passport fields
+            current_passport = []
             continue
+
+        # attempt to find keys and values
+        for pair in line.split(' '):
+            # pair is in the format 'field:value'
+            key = pair.split(':')[0]
+            val = pair.split(':')[1]
+            if key in required:
+                # append required keys to current_passport whose corresponding values meet the requirements
+                if (key == 'byr' and valid_byr(val)) or (key == 'iyr' and valid_iyr(val)) or (key == 'eyr' and valid_eyr(val)) or (key == 'hgt' and valid_hgt(val)) or (key == 'hcl' and valid_hcl(val)) or (key == 'ecl' and valid_ecl(val)) or (key == 'pid' and valid_pid(val)):
+                    current_passport.append(key)
     print(count)

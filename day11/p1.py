@@ -1,4 +1,5 @@
 def occupied_adjacent_seats(model, row, col):
+    ''' returns the number of occupied adjacent seats for a given seat '''
     # constraints
     max_row = len(model)
     max_col = len(model[0])
@@ -33,6 +34,7 @@ def occupied_adjacent_seats(model, row, col):
 
 
 def total_occupied_seats(model):
+    ''' returns the number of occupied seats in a model '''
     occupied = 0
     for row in model:
         for space in row:
@@ -41,11 +43,13 @@ def total_occupied_seats(model):
     return occupied
 
 
-with open('input.txt', 'r') as f:
-    model = [list(x.rstrip()) for x in f.readlines()]
+if __name__ == '__main__':
+    # extract input from file
+    with open('input.txt', 'r') as f:
+        model = [list(x.rstrip()) for x in f.readlines()]
+    
     max_row = len(model)
     max_col = len(model[0])
-
     while True:
         # copy model - normal model.copy() still contains references to original model rows
         new_model = list(map(list, model))
@@ -54,12 +58,16 @@ with open('input.txt', 'r') as f:
             for col in range(max_col):
                 seat = model[row][col]
                 if seat == 'L' and occupied_adjacent_seats(model, row, col) == 0:
+                    # update seat in new model
                     new_model[row][col] = '#'
                     num_changes += 1
                 elif seat == '#' and occupied_adjacent_seats(model, row, col) >= 4:
+                    # update seat in new model
                     new_model[row][col] = 'L'
                     num_changes += 1
+        # update model
         model = new_model
+        # no changes made during iteration
         if num_changes == 0:
             print(total_occupied_seats(model))
             break

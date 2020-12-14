@@ -1,6 +1,10 @@
 import math
-with open("input.txt", "r") as f:
-    lines = [x.rstrip() for x in f.readlines()]
+
+def highest_seat_id():
+    # extract input from file
+    with open('input.txt', 'r') as f:
+        lines = [x.rstrip() for x in f.readlines()]
+    # binary search
     max_seat = -1
     for line in lines:
         # row FB
@@ -26,4 +30,7 @@ with open("input.txt", "r") as f:
         # seat
         seat = row * 8 + col
         max_seat = seat if seat > max_seat else max_seat
-    print(max_seat)
+    return max_seat
+
+if __name__ == '__main__':
+    print(highest_seat_id())

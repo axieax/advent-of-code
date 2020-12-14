@@ -1,37 +1,27 @@
-def two_sum(prev_nums, target):
-    visited = []
-    for num in prev_nums:
-        visited.append(num)
-        if target - num in visited:
-            return True
-    return False
-    
+from p1 import find_invalid_number
 
+# extract input from file
 with open('input.txt', 'r') as f:
-    arr = [int(x) for x in f.readlines()]
-    invalid_num = -1
-    for i in range(25, len(arr)):
-        prev_nums = arr[i - 25: i]
-        # Check two numbers in this list sum to this number
-        if not two_sum(prev_nums, arr[i]):
-            invalid_num = arr[i]
-            break
+    array = [int(x) for x in f.readlines()]
+invalid_num = find_invalid_number(array)
     
-    found = False
-    i = 0
-    while not found and i < len(arr) - 2:
-        contiguous_range = [arr[i], arr[i + 1]]
-        
-        j = i + 2
-        while j < len(arr):
-            # found
-            if sum(contiguous_range) == invalid_num:
-                print(min(contiguous_range) + max(contiguous_range))
-                found = True
-                break
-            # exceeds
-            elif sum(contiguous_range) > invalid_num:
-                break
-            contiguous_range.append(arr[j])
-            j += 1
-        i += 1
+# i is the index of the first number
+i = 0
+while i < len(array) - 2:
+    # add first number and the following number to the continguous range (minimum 2 numbers)
+    contiguous_range = [array[i], array[i + 1]]
+    # the index j starts after these two numbers
+    j = i + 2
+    while j < len(array):
+        # contiguous sum matches the invalid num (found)
+        contiguous_sum = sum(contiguous_range)
+        if contiguous_sum == invalid_num:
+            print(min(contiguous_range) + max(contiguous_range))
+            exit()
+        # contiguous sum exceeds the invalid num
+        elif contiguous_sum > invalid_num:
+            break
+        # keep trying to add more numbers
+        contiguous_range.append(array[j])
+        j += 1
+    i += 1

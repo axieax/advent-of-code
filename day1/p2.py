@@ -1,8 +1,13 @@
-with open("input.txt", "r") as f:
+# extract numbers from input file
+with open('input.txt', 'r') as f:
 	nums = [int(n) for n in f.readlines()]
-	for i in range(len(nums)):
-		for j in range(len(nums)):
-			for k in range(len(nums)):			
-				if nums[i] + nums[j] + nums[k] == 2020:
-					print(nums[i]*nums[j]*nums[k])
-
+# first number
+for i in range(len(nums)):
+	# second number
+	for j in range(len(nums)):
+		# third number
+		for k in range(len(nums)):			
+			# three numbers sum to 2020
+			if nums[i] + nums[j] + nums[k] == 2020:
+				print(nums[i]*nums[j]*nums[k])
+				exit()
