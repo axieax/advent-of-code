@@ -6,7 +6,7 @@ def eval_exp(exp):
         add_index = exp.index('+')
         # evaluate expression about the addition
         new = eval_exp(exp[add_index - 1: add_index + 2])
-        # mutate expression (replace addition expression)
+        # mutate expression (replace addition expression with new)
         for _ in range(3):
             exp.pop(add_index - 1)
         exp.insert(add_index - 1, str(new))
@@ -39,7 +39,7 @@ def evaluate(exp):
         first_close = last_open + exp[last_open:].index(')')
         # simplify exp
         new = eval_exp(exp[last_open + 1: first_close])
-        # update and mutate exp
+        # update exp by replacing expression in parantheses
         for _ in range(first_close - last_open + 1):
             exp.pop(last_open)
         exp.insert(last_open, str(new))

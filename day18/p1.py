@@ -29,7 +29,7 @@ def evaluate(exp):
         first_close = last_open + exp[last_open:].index(')')
         # simplify exp
         new = eval_exp(exp[last_open + 1: first_close])
-        # update and mutate exp
+        # update exp by replacing expression in parantheses
         for _ in range(first_close - last_open + 1):
             exp.pop(last_open)
         exp.insert(last_open, str(new))
