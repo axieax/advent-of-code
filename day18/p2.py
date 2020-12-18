@@ -6,49 +6,54 @@ def eval_exp(exp):
         add_index = exp.index('+')
         # evaluate expression about the addition
         new = eval_exp(exp[add_index - 1: add_index + 2])
-        # mutate exp
+        # mutate expression (replace addition expression)
         for _ in range(3):
             exp.pop(add_index - 1)
         exp.insert(add_index - 1, str(new))
     
+    # normal computation - keeping track of previous operation
     ans = int(exp[0])
-    small_stack = []
+    op_stack = []
     for x in exp[1:]:
         if x.isdigit():
-            if small_stack[-1] == '+':
+            if op_stack[-1] == '+':
                 ans += int(x)
-            elif small_stack[-1] == '*':
+            elif op_stack[-1] == '*':
                 ans *= int(x)
-            small_stack.pop()
+            op_stack.pop()
         else:
-            small_stack.append(x)
+            op_stack.append(x)
+    
     return ans
 
 
 def evaluate(exp):
-    # eval parantheses first
-    stack = [x for x in line if x != ' ']
+    ''' evaluates a complicated expression (list) '''
     ans = 0
     current_index = 0
-    while '(' in stack:
-        # find last opening bracket
-        last_open = len(stack) - stack[::-1].index('(') - 1
+    # eval parantheses first
+    while '(' in exp:
+        # find last opening bracket (first occurence in reversed exp)
+        last_open = len(exp) - exp[::-1].index('(') - 1
         # evaluate to first closing bracket
-        first_close = last_open + stack[last_open:].index(')')
-        # simplify stack
-        new = eval_exp(stack[last_open + 1: first_close])
-        # update stack
+        first_close = last_open + exp[last_open:].index(')')
+        # simplify exp
+        new = eval_exp(exp[last_open + 1: first_close])
+        # update and mutate exp
         for _ in range(first_close - last_open + 1):
-            stack.pop(last_open)
-        stack.insert(last_open, str(new))
+            exp.pop(last_open)
+        exp.insert(last_open, str(new))
     
-    return eval_exp(stack)
+    return eval_exp(exp)
 
-with open('input.txt', 'r') as f:
-    lines = [x.rstrip() for x in f.readlines()]
 
-ans = 0
-for line in lines:
-    ans += evaluate(line)
+if __name__ == '__main__':
+    # extract input from file
+    with open('input.txt', 'r') as f:
+        lines = [x.rstrip() for x in f.readlines()]
 
-print(ans)
+    # evaluate input expressions
+    ans = 0
+    for line in lines:
+        ans += evaluate([x for x in line if x != ' '])
+    print(ans)
