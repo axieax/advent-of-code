@@ -2,54 +2,48 @@ def flatten_lists(lists):
     return sum(lists, [])
 
 def list_join(lists):
+    print(lists)
     ans = []
-    list_of_lists_present = False
-    list_of_strings_present = False
-    # e.g. lists = [['a'],      [['ab'], ['ba']]]
-    for index, appending_list in enumerate(lists):
-        # list of lists
-        if isinstance(appending_list[0], list):
-            for sub_list in appending_list:
-                ans.append(list_join(lists[:index] + [sub_list] + lists[index + 1:]))
-                list_of_lists_present = True
-        # list with multiple options
-        elif len(appending_list) > 1:
-            for string in appending_list:
-                ans.append(list_join(lists[:index] + [[string]] + lists[index + 1:]))
-                list_of_strings_present = True
-    if list_of_lists_present:
-        return flatten_lists(ans)
-    elif list_of_strings_present:
-        return ans
 
-    ans = ['']
-    for appending_list in lists:
-        # resize
-        list_size = len(appending_list)
-        ans *= list_size
-        for index, element in enumerate(appending_list):
-            # range(index * list_size, (index + 1) * list_size)
-            for i in range(index * list_size, (index + 1) * list_size):
-                ans[i] += element
+    # multiple options
+    linear = True
+    for list_index, appending_list in enumerate(lists):      
+        if len(appending_list) > 1:
+            for str_index, option in enumerate(appending_list):
+                ans += list_join(lists[:list_index] + [[option]] + lists[list_index + 1:])
+            linear = False
+
+    # general case (appending_lists linear - single options)
+    if linear:
+        ans = ['']
+        for appending_list in lists:
+            # resize
+            list_size = len(appending_list)
+            ans *= list_size
+            for index, element in enumerate(appending_list):
+                # range(index * list_size, (index + 1) * list_size)
+                for i in range(index * list_size, (index + 1) * list_size):
+                    ans[i] += element
+
     return ans
 
-memo = {}
 
+memo_rules = {}
 def translate_rule(rule_number):
-    if rule_number in memo.keys():
-        return memo[rule_number]
+    if rule_number in memo_rules:
+        return memo_rules[rule_number]
     global rules
     rule = rules[rule_number]
+    # "a" or "b"
     if rule.startswith('"'):
-        memo[rule_number] = [rule[1]]
-        return memo[rule_number]
+        memo_rules[rule_number] = [rule[1]] # ['a'] or ['b']
     # pipe
     elif '|' in rule:
-        memo[rule_number] = [list_join([translate_rule(choice) for choice in option.split(' ')]) for option in rule.split(' | ')]
-        return memo[rule_number]
+        memo_rules[rule_number] = flatten_lists([list_join([translate_rule(choice) for choice in option.split(' ')]) for option in rule.split(' | ')])
+    # sequence
     else:
-        memo[rule_number] = [list_join([translate_rule(choice) for choice in rule.split(' ')])]
-        return memo[rule_number]
+        memo_rules[rule_number] = list_join([translate_rule(choice) for choice in rule.split(' ')])
+    return memo_rules[rule_number]
 
 
 # extract input from file
@@ -60,12 +54,6 @@ messages = lines[130:]
 
 # dict of rules
 rules = {line[0]: line[1] for line in rule_lines}
-# translate dict
-valid = flatten_lists(translate_rule('0'))
-while isinstance(ans[0], list):
-    valid = flatten_lists(valid)
-valid = list(set(valid))
-
-print(valid)
-print(len([x for x in messages if x in valid]))
-
+# translate rule
+valid = translate_rule('0')
+print(list(set(valid)))
