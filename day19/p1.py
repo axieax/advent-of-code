@@ -2,14 +2,13 @@ def flatten_lists(lists):
     return sum(lists, [])
 
 def list_join(lists):
-    print(lists)
     ans = []
-
     # multiple options
     linear = True
     for list_index, appending_list in enumerate(lists):      
         if len(appending_list) > 1:
             for str_index, option in enumerate(appending_list):
+                # e.g. [[a], [b, c], [d]] ==> [[a], [b], [d]] + [[a], [c], [d]]
                 ans += list_join(lists[:list_index] + [[option]] + lists[list_index + 1:])
             linear = False
 
@@ -30,6 +29,7 @@ def list_join(lists):
 
 memo_rules = {}
 def translate_rule(rule_number):
+    # memoization
     if rule_number in memo_rules:
         return memo_rules[rule_number]
     global rules
@@ -54,6 +54,8 @@ messages = lines[130:]
 
 # dict of rules
 rules = {line[0]: line[1] for line in rule_lines}
-# translate rule
-valid = translate_rule('0')
-print(list(set(valid)))
+# translate rule 0
+valid = set(translate_rule('0'))
+
+# number of valid messages
+print(len(valid.intersection(set(messages))))
