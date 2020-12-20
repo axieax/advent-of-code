@@ -7,7 +7,7 @@ def list_join(lists):
     linear = True
     for list_index, appending_list in enumerate(lists):      
         if len(appending_list) > 1:
-            for str_index, option in enumerate(appending_list):
+            for option in appending_list:
                 # e.g. [[a], [b, c], [d]] ==> [[a], [b], [d]] + [[a], [c], [d]]
                 ans += list_join(lists[:list_index] + [[option]] + lists[list_index + 1:])
             linear = False
