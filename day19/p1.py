@@ -33,17 +33,23 @@ def list_join(lists):
                 ans[i] += element
     return ans
 
+memo = {}
 
 def translate_rule(rule_number):
+    if rule_number in memo.keys():
+        return memo[rule_number]
     global rules
     rule = rules[rule_number]
     if rule.startswith('"'):
-        return [rule[1]]
+        memo[rule_number] = [rule[1]]
+        return memo[rule_number]
     # pipe
     elif '|' in rule:
-        return [list_join([translate_rule(choice) for choice in option.split(' ')]) for option in rule.split(' | ')]
+        memo[rule_number] = [list_join([translate_rule(choice) for choice in option.split(' ')]) for option in rule.split(' | ')]
+        return memo[rule_number]
     else:
-        return [list_join([translate_rule(choice) for choice in rule.split(' ')])]
+        memo[rule_number] = [list_join([translate_rule(choice) for choice in rule.split(' ')])]
+        return memo[rule_number]
 
 
 # extract input from file
@@ -61,5 +67,5 @@ while isinstance(ans[0], list):
 valid = list(set(valid))
 
 print(valid)
-# print(len([x for x in messages if x in valid]))
+print(len([x for x in messages if x in valid]))
 
