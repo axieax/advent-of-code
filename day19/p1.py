@@ -28,34 +28,33 @@ def list_join(lists):
 
 
 memo_rules = {}
-def translate_rule(rule_number):
+def translate_rule(rules, rule_number):
     # memoization
     if rule_number in memo_rules:
         return memo_rules[rule_number]
-    global rules
     rule = rules[rule_number]
     # "a" or "b"
     if rule.startswith('"'):
         memo_rules[rule_number] = [rule[1]] # ['a'] or ['b']
     # pipe
     elif '|' in rule:
-        memo_rules[rule_number] = flatten_lists([list_join([translate_rule(choice) for choice in option.split(' ')]) for option in rule.split(' | ')])
+        memo_rules[rule_number] = flatten_lists([list_join([translate_rule(rules, choice) for choice in option.split(' ')]) for option in rule.split(' | ')])
     # sequence
     else:
-        memo_rules[rule_number] = list_join([translate_rule(choice) for choice in rule.split(' ')])
+        memo_rules[rule_number] = list_join([translate_rule(rules, choice) for choice in rule.split(' ')])
     return memo_rules[rule_number]
 
+if __name__ == '__main__':
+    # extract input from file
+    with open('input.txt', 'r') as f:
+        lines = [x.rstrip() for x in f.readlines()]
+    rule_lines = [x.split(': ') for x in lines[:129]]
+    messages = lines[130:]
 
-# extract input from file
-with open('input.txt', 'r') as f:
-    lines = [x.rstrip() for x in f.readlines()]
-rule_lines = [x.split(': ') for x in lines[:129]]
-messages = lines[130:]
+    # dict of rules
+    rules = {line[0]: line[1] for line in rule_lines}
+    # translate rule 0
+    valid = set(translate_rule(rules, '0'))
 
-# dict of rules
-rules = {line[0]: line[1] for line in rule_lines}
-# translate rule 0
-valid = set(translate_rule('0'))
-
-# number of valid messages
-print(len(valid.intersection(set(messages))))
+    # number of valid messages
+    print(len(valid.intersection(set(messages))))
