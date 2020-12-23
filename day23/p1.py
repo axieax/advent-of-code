@@ -1,4 +1,4 @@
-# input
+# input - use modulus for accessing list indices to 'wrap around' the list like a circle
 cups = [int(x) for x in list('135468729')]
 
 current_value = cups[0]

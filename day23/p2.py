@@ -1,28 +1,36 @@
-# mod to wrap around list like a circle
+# circular linked list representation of cups
+class Node:
+    def __init__(self, value):
+        self.value = value
+        self.next = None
+
 # input
-t_cups = [int(x) for x in list('135468729')]
-t_cups = [int(x) for x in list('389125467')]
-cups = [i + 1 for i in range(1000000)]
-cups[0:9] = t_cups
+cups = [int(x) for x in list('135468729')] + list(range(10, 1000000 + 1))
+num_cups = len(cups)
+# create circular linked list for cups
+cups_list = [Node(x) for x in cups]
+for index, cup in enumerate(cups_list[:-1]):
+    cup.next = cups_list[index + 1]
+cups_list[-1].next = cups_list[0]
+lookup = {cup.value: cup for cup in cups_list}
 
-current_value = cups[0]
-for i in range(10 * 1000000):
-    print(i)
-    # print(f'Move {i+1}\n{cups} {current_value}')
-    # popped
-    pick_up = [cups.pop((cups.index(current_value) + 1) % len(cups)) for _ in range(3)]
-    # print(pick_up)
+curr = cups_list[0]
+for _ in range(10 * 1000000):
+    # picked up cups are skipped
+    a, b, c = curr.next, curr.next.next, curr.next.next.next
+    curr.next = c.next
     # destination
-    lower_values = [x for x in cups if x < current_value]
-    destination_value = max(cups) if len(lower_values) == 0 else max(lower_values)
-    destination_index = cups.index(destination_value)
-    # print(destination_value)
-    # place cups
-    for cup in pick_up[::-1]:
-        cups.insert(destination_index + 1, cup)
-    # move to new position
-    current_value = cups[(cups.index(current_value) + 1) % len(cups)]
+    unavailable = [a.value, b.value, c.value, curr.value]
+    destination_value = curr.value
+    while destination_value in unavailable:
+        destination_value -= 1
+        if destination_value < 1:
+            destination_value = num_cups
+    dest = lookup[destination_value]
+    # reconnect picked up cups, placing them after dest
+    c.next = dest.next
+    dest.next = a
+    curr = curr.next
 
-index_of_one = cups.index(1)
-print(cups[(index_of_one + 1) % 1000000] * cups[(index_of_one + 2) % 1000000])
-# print(''.join([str(x) for x in cups]))
+# calculate answer
+print(lookup[1].next.value * lookup[1].next.next.value)
