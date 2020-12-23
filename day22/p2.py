@@ -1,5 +1,3 @@
-import re
-
 def recursive_combat(p1, p2):
     ''' returns tuple: (winning_deck, winner) '''
     seen = set()
@@ -30,7 +28,8 @@ def recursive_combat(p1, p2):
 if __name__ == '__main__':
     # extract input from file
     with open('input.txt', 'r') as f:
-        p1, p2 = [[int(i) for i in re.findall(r'\d+', x)[1:]] for x in (f.read() + '\n').split('\n\n')]
+        p1, p2 = [[int(i) for i in x.split('\n')[1:] if i] for x in (f.read() + ('\n')).split('\n\n')]
+        # p1, p2 = [[int(i) for i in re.findall(r'\d+', x)[1:]] for x in (f.read() + '\n').split('\n\n')]
 
     # calculate answer
     winning_deck = recursive_combat(p1, p2)[0]

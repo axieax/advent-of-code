@@ -1,8 +1,6 @@
-import re
-
 # extract input from file
 with open('input.txt', 'r') as f:
-    p1, p2 = [[int(i) for i in re.findall(r'\d+', x)[1:]] for x in (f.read() + '\n').split('\n\n')]
+    p1, p2 = [[int(i) for i in x.split('\n')[1:] if i] for x in (f.read() + ('\n')).split('\n\n')]
 
 # game ends when one of the players is out of cards
 while len(p1) > 0 and len(p2) > 0:    
