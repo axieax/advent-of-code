@@ -1,50 +1,46 @@
 import re
-class Tile:
-    def __init__(self):
-        self.black = False
-        self.neighbours = {}
-    def flip(self):
-        self.black = not self.black
+
+def coordinate_move(original, offset):
+    ''' returns a new coordinate tuple representing original + offset '''
+    return original[0] + offset[0], original[1] + offset[1]
+
+def flip_tile(black_tiles_set, tile):
+    ''' flips a tile from a specified set of tiles '''
+    if tile in black_tiles_set:
+        black_tiles_set.remove(tile)
+    else:
+        black_tiles_set.add(tile)
 
 
-def opposite_direction(d):
-    directions = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw']
-    return directions[(directions.index(d) + 4) % 8]
+if __name__ == '__main__':
+    # extract input from file
+    with open('input.txt', 'r') as f:
+        lines = [re.findall(r'(e|se|sw|w|nw|ne)', line) for line in f.readlines()]
 
+    '''
+    Hexagonal grid coordinate system:
+    [  ] [nw] [  ] [ne] [  ]
+    [  ] [  ] [  ] [  ] [  ]
+    [w ] [  ] [x ] [  ] [e ]
+    [  ] [  ] [  ] [  ] [  ]
+    [  ] [sw] [  ] [se] [  ]
+    '''
+    directions = {
+        # x, y
+        'e': (2, 0),
+        'se': (1, -2),
+        'sw': (-1, -2),
+        'w': (-2, 0),
+        'nw': (-1, 2),
+        'ne': (1, 2),
+    }
 
-# extract input from file
-with open('input.txt', 'r') as f:
-    lines = [x.rstrip() for x in f.readlines()]
+    # only save black tiles
+    black_tiles = set()
+    for line in lines:
+        tile = (0, 0)
+        for move in line:
+            tile = coordinate_move(tile, directions[move])
+        flip_tile(black_tiles, tile)
 
-# split directions
-for n, line in enumerate(lines):
-    tokenised = []
-    for i, char in enumerate(line):
-        if char == 'e' or char == 'w':
-            tokenised.append(char)
-        elif char == 's' or char == 'n':
-            tokenised.append(char + line[i + 1])
-    lines[n] = tokenised
-
-print(lines)
-
-all_tiles = [Tile(), ]
-for line in lines:
-    # reference tile
-    curr = all_tiles[0]
-    curr.flip()
-    for move in line:
-        if move in curr.neighbours:
-            new = curr.neighbours[move]
-        else:
-            new = Tile()
-            new.neighbours[opposite_direction(move)] = curr
-            curr.neighbours[move] = new
-            all_tiles.append(new)
-        curr.flip()
-        curr = new
-
-print(all_tiles)
-print(len([x for x in all_tiles if x.black]))
-
-# issue: E then W should point to the same tile, but program doesn't know - doubly linked
+    print(len(black_tiles))
