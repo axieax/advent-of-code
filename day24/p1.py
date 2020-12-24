@@ -5,7 +5,7 @@ def coordinate_move(original, offset):
     return original[0] + offset[0], original[1] + offset[1]
 
 def flip_tile(black_tiles_set, tile):
-    ''' flips a tile from a specified set of tiles '''
+    ''' flips a tile from a specified set of tiles (similar to XOR operation on sets -> black_tiles_set ^ {tile}) '''
     if tile in black_tiles_set:
         black_tiles_set.remove(tile)
     else:
