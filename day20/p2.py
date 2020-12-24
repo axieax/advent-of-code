@@ -6,14 +6,16 @@ from p1 import borders, all_borders
 # border position (0 - North/Up, 1 - East/Right, 2 - South/Down, 3 - West/Left)
 # rotation (0, 90, 180, 270)
 # flipped (0 - no flip, 1 - about X axis, 2 - about Y axis)
+# NOTE: flip of 1 + flip of 2 is the same as a 180 degree rotation
 
 def tile_rotate(tile, degree):
+    ''' Rotates a 2D array clockwise by the degree specified '''
     a = np.array([list(x) for x in tile])
     a = np.rot90(a, k=degree//90, axes=(1,0))
     return [''.join(x) for x in a.tolist()]
 
 def tile_flip(tile, flip):
-    # flip of 1 and flip of 2 => rotate 180
+    ''' Flips a 2D array in the flip direction specified '''
     if flip == 0:
         return tile
     elif flip == 1:
@@ -22,29 +24,32 @@ def tile_flip(tile, flip):
         return tile[::-1]
 
 def tile_combinations(tile):
+    ''' Return all flipped and rotated combinations of a 2D array '''
     patterns = []
     for flip in [0, 1, 2]:
         for rotation in [0, 90, 180, 270]:
             patterns.append(tile_flip(tile_rotate(tile, rotation), flip))
     return patterns
 
-def tile_neighbours(tile):
+def tile_neighbours(tile_key):
+    ''' Returns the tiles that share a common border with the given tile '''
     tiles = []
-    if tile in two_borders:
-        common_borders = two_borders[tile]
+    if tile_key in two_borders:
+        common_borders = two_borders[tile_key]
         for border_tuple in common_borders:
             tiles.append(border_tuple[2])
-    elif tile in three_borders:
-        common_borders = three_borders[tile]
+    elif tile_key in three_borders:
+        common_borders = three_borders[tile_key]
         for border_tuple in common_borders:
             tiles.append(border_tuple[2])
-    elif tile in four_borders:
-        common_borders = four_borders[tile]
+    elif tile_key in four_borders:
+        common_borders = four_borders[tile_key]
         for border_tuple in common_borders:
             tiles.append(border_tuple[2])
     return tiles
 
 def common_border_positions(tile, neighbours):
+    ''' Returns a list of borders for a tile that are common with a neighbour '''
     positions = []
     tile_borders = borders(tile)
     for neighbour in neighbours:
@@ -53,15 +58,28 @@ def common_border_positions(tile, neighbours):
                 positions.append(position)
     return positions
 
+def check_sea_monster(image, i, j):
+    ''' Checks if a sea monster can be seen from coordinates i, j '''
+    try:
+        for row, sm_line in enumerate(sea_monster):
+            for col, sm_char in enumerate(sm_line):
+                # where a sea monster has a '#', the relative position in the image should also have a '#'
+                if sm_char == '#' and image[i + row][j + col] != '#':
+                    return False
+        return True
+    except:
+        return False
+
 
 # extract input from file
 with open('input.txt', 'r') as f:
     lines = [x.rstrip() for x in f.readlines()] + ['']
-# map: key -> pattern
+# tiles (key -> pattern)
 tiles = {}
+tile_length = 10
 for index, line in enumerate(lines):
     if line.startswith('Tile'):
-        tiles[int(line.split('Tile ')[1][:-1])] = lines[index + 1: index + 11]
+        tiles[int(line.split('Tile ')[1][:-1])] = lines[index + 1: index + 1 + tile_length]
 # find pieces with x borders
 two_borders = {}
 three_borders = {}
@@ -90,128 +108,141 @@ for tile_key, tile_pattern in tiles.items():
         four_borders[tile_key] = common_borders
 
 # start filling in puzzle
-puzzle = [[-1 for _ in range(12)] for _ in range(12)] # tile key representation
-puzzle_visual = [['' for _ in range(12)] for _ in range(12)] # tile pattern representation
+num_tiles = len(tiles)
+puzzle_length = int(num_tiles ** 0.5)
+puzzle = [[-1 for _ in range(puzzle_length)] for _ in range(puzzle_length)] # tile key representation
+puzzle_visual = [['' for _ in range(puzzle_length)] for _ in range(puzzle_length)] # tile pattern representation
 # find leftmost tile
 leftmost_tile = [tile_key for tile_key, common_borders in two_borders.items() if all([tup[1] in [1, 2] for tup in common_borders])][0]
 puzzle[0][0] = leftmost_tile
 puzzle_visual[0][0] = tiles[leftmost_tile]
 
 # fill in puzzle
-for i in range(12):
-    for j in range(12):
+for i in range(puzzle_length):
+    for j in range(puzzle_length):
         # ignore leftmost piece (already placed)
         if i == j == 0:
             continue
         # top row
         elif i == 0:
+            # extract information about tile to the left
             left_tile_key = puzzle[i][j - 1]
             left_common_border = borders(puzzle_visual[i][j - 1])[1]
             left_neighbours = tile_neighbours(left_tile_key)
-            # try to find the tile which shares a common border with left_common_border
+            # try to find the tile which shares a common border with the tile to the left
             placed = False
             for possible in left_neighbours:
                 if placed:
                     break
+                # examine all the ways a tile can be arranged
                 possible_neighbours = tile_neighbours(possible)
                 combinations = tile_combinations(tiles[possible])
                 for combination in combinations:
-                    # left border of possible is the left_common_border, and other common borders aren't facing an edge (being unused)
-                    open_positions = [2, 3] if j == 11 else [1, 2, 3]
+                    # top row tiles (excluding the upper left and upper right corner tiles) have open common borders on their right, down and left edges (1, 2, 3)
+                    # the upper left corner tile has already been placed so we ignore it, and the upper right corner tile has open borders on its down and left edges (2, 3)
+                    open_positions = [2, 3] if j == puzzle_length - 1 else [1, 2, 3]
                     if borders(combination)[3] == left_common_border and sorted(common_border_positions(combination, possible_neighbours)) == open_positions:
-                        # place
+                        # select tile which satisfies the open positions and shares its left border with the tile to the left
                         puzzle[i][j] = possible
                         puzzle_visual[i][j] = combination
                         placed = True
                         break
         # left column
         elif j == 0:
+            # extract information about tile above
             up_tile_key = puzzle[i - 1][j]
             up_common_border = borders(puzzle_visual[i - 1][j])[2]
             up_neighbours = tile_neighbours(up_tile_key)
-            # try to find the tile which shares a common border with up_commmon_border
+            # try to find the tile which shares a common border with the tile above
             placed = False
             for possible in up_neighbours:
                 if placed:
                     break
+                # examine all the ways a tile can be arranged
                 possible_neighbours = tile_neighbours(possible)
                 combinations = tile_combinations(tiles[possible])
                 for combination in combinations:
-                    # up border of possible is up_common_border, and the other common borders aren't facing an edge (being unused)
-                    open_positions = [0, 1] if i == 11 else [0, 1, 2]
+                    # left column tiles (excluding the upper left and bottom left corner tiles) have open common borders on their up, right, down edges (0, 1, 2)
+                    # the upper left corner tile has already been placed so we ignore it, and the bottom left corner tile has open borders on its up and right edges (0, 1)
+                    open_positions = [0, 1] if i == puzzle_length - 1 else [0, 1, 2]
                     if borders(combination)[0] == up_common_border and sorted(common_border_positions(combination, possible_neighbours)) == open_positions:
-                        # place
+                        # select tile which satisfies the open positions and shares its upper border with the tile above
                         puzzle[i][j] = possible
                         puzzle_visual[i][j] = combination
                         placed = True
                         break
         # general placement - check left and above
         else:
+            # extract information about tile to the left
             left_tile_key = puzzle[i][j - 1]
             left_common_border = borders(puzzle_visual[i][j - 1])[1]
             left_neighbours = tile_neighbours(left_tile_key)
+            # extract information about tile above
             up_tile_key = puzzle[i - 1][j]
             up_common_border = borders(puzzle_visual[i - 1][j])[2]
             up_neighbours = tile_neighbours(up_tile_key)
+            # try to find the tile which shares a common border with the tile to the left and above
             options = list(set(left_neighbours) & set(up_neighbours))
             placed = False
             for possible in options:
                 if placed:
                     break
+                # examine all the ways a tile can be arranged
                 possible_neighbours = tile_neighbours(possible)
                 combinations = tile_combinations(tiles[possible])
                 for combination in combinations:
-                    # up border of possible is up_common_border, and the other common borders aren't facing an edge (being unused)
-                    if i == 11:
-                        open_positions = [0, 3] if j == 11 else [0, 1, 3]
+                    # bottom row
+                    if i == puzzle_length - 1:
+                        # excluding the bottom left and bottom right corners, bottom row tiles have open common borders on their
+                        # left, up and right edges (0, 1, 3), the bottom left corner has already been addressed under left column
+                        # so we ignore it, and the bottom right corner has open borders on its left and up edges (0, 3)
+                        open_positions = [0, 3] if j == puzzle_length - 1 else [0, 1, 3]
+                    # general rows
                     else:
-                        open_positions = [0, 2, 3] if j == 11 else [0, 1, 2, 3]
+                        # in general, excluding tiles in the rightmost column, these tiles have all their borders open (0, 1, 2, 3)
+                        open_positions = [0, 2, 3] if j == puzzle_length - 1 else [0, 1, 2, 3]
                     if borders(combination)[0] == up_common_border and borders(combination)[3] == left_common_border and sorted(common_border_positions(combination, possible_neighbours)) == open_positions:
-                        # place
+                        # select tile which satisfies the open positions and shares its left border with the tile to the left, and upper border with the tile above
                         puzzle[i][j] = possible
                         puzzle_visual[i][j] = combination
                         placed = True
                         break
 
-# convert puzzle_visual into an artwork
-artwork = ['' for _ in range(144)]
-for i, row in enumerate(puzzle_visual):
-    for j, tile in enumerate(row):
-        for k, line in enumerate(tile):
-            artwork[i * 12 + j] += line
-artwork = [list(x) for x in artwork]
-print(artwork)
+# remove borders from completed puzzle
+for i, row in enumerate(puzzle_visual): # puzzle_length
+    for j, tile in enumerate(row): # puzzle_length
+        puzzle_visual[i][j] = [r[1:-1] for r in tile[1:-1]]
+tile_length -= 2
 
-sea_monster = '''
-                  # 
-#    ##    ##    ###
- #  #  #  #  #  #   
-'''
-sea_monster_pattern = [
-    '..................#.',
-    '#....##....##....###',
-    '.#..#..#..#..#..#...',
+# create artwork (2D list of characters) from the puzzle (3D list of characters)
+artwork = [[] for _ in range(puzzle_length * tile_length)]
+for i, row in enumerate(puzzle_visual): # puzzle_length
+    for j, tile in enumerate(row): # puzzle_length
+        for k, line in enumerate(tile): # tile_length
+            artwork[i * tile_length + k] += list(line)
+
+# check for sea monsters
+sea_monster = [
+    '                  # ',
+    '#    ##    ##    ###',
+    ' #  #  #  #  #  #   ',
 ]
+sea_monster = [list(row) for row in sea_monster]
 
-
-def check_sea_monster(image, row, column):
-    # 20 wide
-    try:
-        window = [x[column: column + 20] for x in image[row: row + 3]]
-        if window == sea_monster_pattern:
-            return True
-        return False
-    except:
-        return False
-
-print(puzzle_visual[0][0]) # BUG: some are 10 instead of 12
-
-# find sea monsters
+# find sea monsters for each rotation/flip combination of artwork
 for comb in tile_combinations(artwork):
-    # print('\n'.join([''.join(x) for x in comb]))
+    num_hashes = 0
     num_sea_monsters = 0
     for i, row in enumerate(comb):
-        for j, char in enumerate(line):
+        for j, char in enumerate(row):
             if char == '#':
-                num_sea_monsters += check_sea_monster(comb, i, j)
-    # print(num_sea_monsters)
+                num_hashes += 1
+            num_sea_monsters += check_sea_monster(comb, i, j)
+    if num_sea_monsters > 0:
+        # roughness: number of hashes that are not part of a sea monster (which has 15 hashes)
+        print(num_hashes - 15 * num_sea_monsters)
+        break
+
+
+# debugging: print artwork
+# print('\n'.join([''.join(x) for x in artwork]))
