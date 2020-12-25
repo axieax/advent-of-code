@@ -16,16 +16,16 @@ with open('input.txt', 'r') as f:
     card_public_key, door_public_key = [int(x) for x in f.readlines()]
     subject_number = 7
 
-# find card loop size (unnecessary)
-# card_loop_size = 0
-# while transform_subject_number(subject_number, card_loop_size) != card_public_key:
-#     card_loop_size += 1
+# find card loop size
+card_loop_size = 0
+while transform_subject_number(subject_number, card_loop_size) != card_public_key:
+    card_loop_size += 1
 
-# find door loop size
-door_loop_size = 0
-while transform_subject_number(subject_number, door_loop_size) != door_public_key:
-    door_loop_size += 1
+# find door loop size (unncessary)
+# door_loop_size = 0
+# while transform_subject_number(subject_number, door_loop_size) != door_public_key:
+#     door_loop_size += 1
 
 # find encryption key
-encryption_key = transform_subject_number(card_public_key, door_loop_size)
+encryption_key = transform_subject_number(door_public_key, card_loop_size)
 print(encryption_key)
