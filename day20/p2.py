@@ -58,6 +58,25 @@ def common_border_positions(tile, neighbours):
                 positions.append(position)
     return positions
 
+def find_tile(possible_tiles, tile_common_border_positions, border_requirements):
+    '''
+    Returns a tile from possible_tiles which has common borders for the specified tile_common_border_positions,
+    and satisfies the border_requirements (list of tuples (border_direction, border_pattern)) where its
+    border_direction border matches the specified border_pattern
+    '''
+    for tile in possible_tiles:
+        neighbours = tile_neighbours(tile)
+        combinations = tile_combinations(tiles[tile])
+        # examine all possible arrangements for the tile
+        for combination in combinations:
+            # tile has to satisfy requirements - has 'border' in its specified border direction
+            if not all([borders(combination)[direction] == border for direction, border in border_requirements]):
+                continue
+            # tile has common borders in its specified tile_common_border_positions
+            if sorted(common_border_positions(combination, neighbours)) == tile_common_border_positions:
+                return tile, combination
+    return None, None
+
 def check_sea_monster(image, i, j):
     ''' Checks if a sea monster can be seen from coordinates i, j '''
     try:
@@ -117,60 +136,49 @@ leftmost_tile = [tile_key for tile_key, common_borders in two_borders.items() if
 puzzle[0][0] = leftmost_tile
 puzzle_visual[0][0] = tiles[leftmost_tile]
 
+
 # fill in puzzle
 for i in range(puzzle_length):
     for j in range(puzzle_length):
         # ignore leftmost piece (already placed)
         if i == j == 0:
             continue
-        # top row
+        # top row tile placement
         elif i == 0:
             # extract information about tile to the left
             left_tile_key = puzzle[i][j - 1]
             left_common_border = borders(puzzle_visual[i][j - 1])[1]
-            left_neighbours = tile_neighbours(left_tile_key)
-            # try to find the tile which shares a common border with the tile to the left
-            placed = False
-            for possible in left_neighbours:
-                if placed:
-                    break
-                # examine all the ways a tile can be arranged
-                possible_neighbours = tile_neighbours(possible)
-                combinations = tile_combinations(tiles[possible])
-                for combination in combinations:
-                    # top row tiles (excluding the upper left and upper right corner tiles) have open common borders on their right, down and left edges (1, 2, 3)
-                    # the upper left corner tile has already been placed so we ignore it, and the upper right corner tile has open borders on its down and left edges (2, 3)
-                    open_positions = [2, 3] if j == puzzle_length - 1 else [1, 2, 3]
-                    if borders(combination)[3] == left_common_border and sorted(common_border_positions(combination, possible_neighbours)) == open_positions:
-                        # select tile which satisfies the open positions and shares its left border with the tile to the left
-                        puzzle[i][j] = possible
-                        puzzle_visual[i][j] = combination
-                        placed = True
-                        break
+            left_tile_neighbours = tile_neighbours(left_tile_key)
+
+            # top row tiles (excluding the upper left and upper right corner tiles) have open common borders on their right, down and left edges (1, 2, 3)
+            # the upper left corner tile has already been placed so we ignore it, and the upper right corner tile has open borders on its down and left edges (2, 3)
+            tile_common_border_positions = [2, 3] if j == puzzle_length - 1 else [1, 2, 3]
+            # try to find the tile which shares a common border with the tile to the left (has left_common_border as its west border)
+            border_requirements = [(3, left_common_border)]
+            
+            # find tile with these requirements
+            tile_key, tile_pattern = find_tile(left_tile_neighbours, tile_common_border_positions, border_requirements)
+            puzzle[i][j] = tile_key
+            puzzle_visual[i][j] = tile_pattern
+
         # left column
         elif j == 0:
             # extract information about tile above
             up_tile_key = puzzle[i - 1][j]
             up_common_border = borders(puzzle_visual[i - 1][j])[2]
             up_neighbours = tile_neighbours(up_tile_key)
-            # try to find the tile which shares a common border with the tile above
-            placed = False
-            for possible in up_neighbours:
-                if placed:
-                    break
-                # examine all the ways a tile can be arranged
-                possible_neighbours = tile_neighbours(possible)
-                combinations = tile_combinations(tiles[possible])
-                for combination in combinations:
-                    # left column tiles (excluding the upper left and bottom left corner tiles) have open common borders on their up, right, down edges (0, 1, 2)
-                    # the upper left corner tile has already been placed so we ignore it, and the bottom left corner tile has open borders on its up and right edges (0, 1)
-                    open_positions = [0, 1] if i == puzzle_length - 1 else [0, 1, 2]
-                    if borders(combination)[0] == up_common_border and sorted(common_border_positions(combination, possible_neighbours)) == open_positions:
-                        # select tile which satisfies the open positions and shares its upper border with the tile above
-                        puzzle[i][j] = possible
-                        puzzle_visual[i][j] = combination
-                        placed = True
-                        break
+
+            # left column tiles (excluding the upper left and bottom left corner tiles) have open common borders on their up, right, down edges (0, 1, 2)
+            # the upper left corner tile has already been placed so we ignore it, and the bottom left corner tile has open borders on its up and right edges (0, 1)
+            tile_common_border_positions = [0, 1] if i == puzzle_length - 1 else [0, 1, 2]
+            # try to find the tile which shares a common border with the tile above (has up_common_border as its top border)
+            border_requirements = [(0, up_common_border)]
+            
+            # find tile with these requirements
+            tile_key, tile_pattern = find_tile(up_neighbours, tile_common_border_positions, border_requirements)
+            puzzle[i][j] = tile_key
+            puzzle_visual[i][j] = tile_pattern
+
         # general placement - check left and above
         else:
             # extract information about tile to the left
@@ -181,32 +189,28 @@ for i in range(puzzle_length):
             up_tile_key = puzzle[i - 1][j]
             up_common_border = borders(puzzle_visual[i - 1][j])[2]
             up_neighbours = tile_neighbours(up_tile_key)
-            # try to find the tile which shares a common border with the tile to the left and above
-            options = list(set(left_neighbours) & set(up_neighbours))
-            placed = False
-            for possible in options:
-                if placed:
-                    break
-                # examine all the ways a tile can be arranged
-                possible_neighbours = tile_neighbours(possible)
-                combinations = tile_combinations(tiles[possible])
-                for combination in combinations:
-                    # bottom row
-                    if i == puzzle_length - 1:
-                        # excluding the bottom left and bottom right corners, bottom row tiles have open common borders on their
-                        # left, up and right edges (0, 1, 3), the bottom left corner has already been addressed under left column
-                        # so we ignore it, and the bottom right corner has open borders on its left and up edges (0, 3)
-                        open_positions = [0, 3] if j == puzzle_length - 1 else [0, 1, 3]
-                    # general rows
-                    else:
-                        # in general, excluding tiles in the rightmost column, these tiles have all their borders open (0, 1, 2, 3)
-                        open_positions = [0, 2, 3] if j == puzzle_length - 1 else [0, 1, 2, 3]
-                    if borders(combination)[0] == up_common_border and borders(combination)[3] == left_common_border and sorted(common_border_positions(combination, possible_neighbours)) == open_positions:
-                        # select tile which satisfies the open positions and shares its left border with the tile to the left, and upper border with the tile above
-                        puzzle[i][j] = possible
-                        puzzle_visual[i][j] = combination
-                        placed = True
-                        break
+            # possible options for this tile are neighbours of both the tile to the left and the tile above
+            tile_options = list(set(left_neighbours) & set(up_neighbours))
+            
+            # bottom row
+            if i == puzzle_length - 1:
+                # excluding the bottom left and bottom right corners, bottom row tiles have open common borders on their
+                # left, up and right edges (0, 1, 3), the bottom left corner has already been addressed under left column
+                # so we ignore it, and the bottom right corner has open borders on its left and up edges (0, 3)
+                tile_common_border_positions = [0, 3] if j == puzzle_length - 1 else [0, 1, 3]
+            # general rows
+            else:
+                # in general, excluding tiles in the rightmost column, these tiles have all their borders open (0, 1, 2, 3)
+                tile_common_border_positions = [0, 2, 3] if j == puzzle_length - 1 else [0, 1, 2, 3]
+            # try to find the tile which shares a common border with the tile to the left (has left_common_border as its west border)
+            # and shares a common border with the tile above (has up_common_border as its top border)
+            border_requirements = [(0, up_common_border), (3, left_common_border)]
+
+            # find tile with these requirements
+            tile_key, tile_pattern = find_tile(tile_options, tile_common_border_positions, border_requirements)
+            puzzle[i][j] = tile_key
+            puzzle_visual[i][j] = tile_pattern
+
 
 # remove borders from completed puzzle
 for i, row in enumerate(puzzle_visual): # puzzle_length
@@ -242,7 +246,3 @@ for comb in tile_combinations(artwork):
         # roughness: number of hashes that are not part of a sea monster (which has 15 hashes)
         print(num_hashes - 15 * num_sea_monsters)
         break
-
-
-# debugging: print artwork
-# print('\n'.join([''.join(x) for x in artwork]))
