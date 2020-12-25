@@ -11,10 +11,10 @@ def transform_subject_number(subject_number, loop_size):
     return pow(subject_number, loop_size, 20201227)
 
 
-# input
-card_public_key = 15335876
-door_public_key = 15086442
-subject_number = 7
+# extract input from file
+with open('input.txt', 'r') as f:
+    card_public_key, door_public_key = [int(x) for x in f.readlines()]
+    subject_number = 7
 
 # find card loop size
 card_loop_size = 0
