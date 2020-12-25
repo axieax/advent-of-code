@@ -16,10 +16,10 @@ with open('input.txt', 'r') as f:
     card_public_key, door_public_key = [int(x) for x in f.readlines()]
     subject_number = 7
 
-# find card loop size
-card_loop_size = 0
-while transform_subject_number(subject_number, card_loop_size) != card_public_key:
-    card_loop_size += 1
+# find card loop size (unnecessary)
+# card_loop_size = 0
+# while transform_subject_number(subject_number, card_loop_size) != card_public_key:
+#     card_loop_size += 1
 
 # find door loop size
 door_loop_size = 0
