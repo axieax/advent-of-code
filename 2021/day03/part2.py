@@ -4,10 +4,6 @@ with open("input.txt") as f:
     data = [x.strip() for x in f.readlines()]
     num_digits = len(data[0])
 
-# calculate oxygen rating
-oxygen_data = data.copy()
-co2_data = data.copy()
-
 
 def most_common_bit(data: list[str], digit_position: int) -> str:
     """
@@ -23,6 +19,8 @@ def most_common_bit(data: list[str], digit_position: int) -> str:
     return first[0] if not equal else "1"
 
 
+oxygen_data = data.copy()
+co2_data = data.copy()
 for digit_position in range(num_digits):
     # oxygen or co2 dataset exhausted
     if 1 in (len(oxygen_data), len(co2_data)):
@@ -37,6 +35,7 @@ for digit_position in range(num_digits):
     lcb_co2 = str((~int(mcb_co2)) & 1)
     co2_data = [line for line in co2_data if line[digit_position] == lcb_co2]
 
+# calculate oxygen and co2 ratings
 oxygen = int(oxygen_data[0], 2)
 co2 = int(co2_data[0], 2)
 power = oxygen * co2
