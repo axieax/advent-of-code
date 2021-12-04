@@ -13,7 +13,7 @@ boards = "\n\n".join(boards)
 GAPS = (0, 3, 6, 9, 12)
 BINGO_PATTERNS = [
     # vertical matches
-    re.compile(("\n.{%s}-1.*?" % gap) * BOARD_SIZE)
+    re.compile("\n" + "\n".join((r".{%s}-1.*?" % gap,) * BOARD_SIZE))
     for gap in GAPS
 ] + [
     # horizontal matches
@@ -24,6 +24,7 @@ BINGO_PATTERNS = [
 # re.compile("\n".join(f".*?-1.{gap}" for gap in GAPS)),
 bingo_win = lambda b: any(bingo_checker.search(b) for bingo_checker in BINGO_PATTERNS)
 
+scores = []
 for draw in draws:
     # indicate matches on boards
     # pad with space if necessary
@@ -34,13 +35,15 @@ for draw in draws:
 
     # check for bingo
     if bingo_win("\n" + boards):
-        print(f"BINGO! {draw}")
         # find winning board
-        boards = boards.split("\n\n")
-        winning_board = [b for b in boards if bingo_win("\n" + b)][0]
-        print(winning_board)
-        # calculate score
-        unmarked_numbers = re.findall(r"[^(-1)]\d+", winning_board)
-        score = int(draw) * sum(int(x) for x in unmarked_numbers)
-        print(f"{score=}")
-        break
+        boards_str = boards.split("\n\n")
+        winning_boards = [b for b in boards_str if bingo_win("\n" + b)]
+        for winning_board in winning_boards:
+            boards = re.sub(winning_board + "\n\n", "", boards + "\n\n").strip()
+            # calculate score
+            unmarked_numbers = re.findall(r"[^(-1)]\d+", winning_board)
+            score = int(draw) * sum(int(x) for x in unmarked_numbers)
+            scores.append(score)
+
+print(scores)
+print(scores[-1])
