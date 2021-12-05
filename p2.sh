@@ -1,7 +1,6 @@
 #!/bin/bash
+#
+# Runs the program for the current AOC day's part 2 problem
 
-year=$(date +%Y)
-day=$(date +%d)
-cd $year
-cd day$day
+cd $(date +%Y/day%d)
 python part2.py
