@@ -27,8 +27,8 @@ bingo_win = lambda b: any(bingo_checker.search(b) for bingo_checker in BINGO_PAT
 scores = []
 for draw in draws:
     # indicate matches on boards
-    # pad with space if necessary
-    sub_pattern = draw if len(draw) > 1 else " " + draw
+    # pad draw with space if necessary
+    sub_pattern = " " * (len(draw) <= 1) + draw
     # followed by a space or end of line
     sub_pattern += "(?= |\n)"
     boards = re.sub(sub_pattern, "-1", boards)
